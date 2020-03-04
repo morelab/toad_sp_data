@@ -1,0 +1,22 @@
+language: python
+
+# execute py38 and lint as separate CI processes
+matrix:
+  include:
+    - python: 3.8
+      dist: xenial
+      env: TOXENV=py38
+    - python: 3.8
+      dist: xenial
+      env: TOXENV=lint
+
+# install tox
+install:
+  - pip install --upgrade pip
+  - pip install tox
+# command to run tests
+script:
+  - tox
+# Upload coverage report to 'Codecov'
+# after_script:
+  # - codecov --token=
