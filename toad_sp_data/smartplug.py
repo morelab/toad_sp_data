@@ -33,6 +33,9 @@ def decrypt(response: bytes) -> bytes:
     :param response: raw encrypted response from the SP
     :return: decrypted response from the SP
     """
+    # strip unused bytes
+    if response[:4] == b"\x00\x00\x00?":
+        response = response[4:]
     key = 171
     result = b""
     for i in response:
