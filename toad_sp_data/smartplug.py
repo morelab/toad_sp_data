@@ -10,6 +10,18 @@ from typing import Any, Tuple
 from toad_sp_data import logger
 
 
+class DecryptionException(Exception):
+    """
+    Decryption errors have to be handled and depend not on the decryptors
+    actions but on the message being decrypted.
+
+    Encryption errors depend on the payload and will never happen if the
+    payload is correct, making an exception for encryption unnecessary.
+    """
+
+    pass
+
+
 def encrypt(payload: bytes) -> bytes:
     """
     Encrypt payload to be sent to a SP.
@@ -20,9 +32,8 @@ def encrypt(payload: bytes) -> bytes:
     key = 171
     result = pack(">I", len(payload))
     for i in payload:
-        a = key ^ i
-        key = a
-        result += bytes([a])
+        key = x = key ^ i
+        result += bytes([x])
     return result
 
 
@@ -33,15 +44,21 @@ def decrypt(response: bytes) -> bytes:
     :param response: raw encrypted response from the SP
     :return: decrypted response from the SP
     """
+    if response is None or len(response) < 4:
+        raise DecryptionException("Invalid or null response")
     # strip unused bytes
     if response[:4] == b"\x00\x00\x00?":
         response = response[4:]
-    key = 171
-    result = b""
-    for i in response:
-        a = key ^ i
-        key = i
-        result += bytes([a])
+    # decrypt message
+    try:
+        key = 171
+        result = b""
+        for i in response:
+            x = key ^ i
+            key = i
+            result += bytes([x])
+    except json.JSONDecodeError:
+        raise DecryptionException("Could not decode JSON from decrypted response")
     return result
 
 
@@ -63,7 +80,6 @@ async def send_command(cmd: dict, ip: str, port: int = 9999) -> Tuple[bool, Any]
         await writer.drain()
         data = await reader.read()
         writer.close()
-        await writer.wait_closed()
         if len(data) == 0:
             return False, {}
         decrypted = decrypt(data[4:])

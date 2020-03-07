@@ -1,6 +1,8 @@
-from pytest import fail
+# import asyncio
+import pytest
 from json import loads, JSONDecodeError
 
+# from tests import mocks
 from toad_sp_data import smartplug
 
 
@@ -22,7 +24,7 @@ def test_encrypt():
     # encrypt a null message
     try:
         smartplug.encrypt(None)
-        fail("Expected TypeError")
+        pytest.fail("Expected TypeError")
     except TypeError:
         pass
 
@@ -36,20 +38,30 @@ def test_decrypt():
     # decrypt a null message
     try:
         smartplug.decrypt(None)
-        fail("Expected TypeError")
-    except TypeError:
+        pytest.fail("Expected exception caused by null payload")
+    except smartplug.DecryptionException:
         pass
     # decrypt an empty
     try:
-        invalid = smartplug.decrypt(b"")
-        loads(invalid)
-        fail("Expected JSONDecodeError")
-    except JSONDecodeError:
+        smartplug.decrypt(b"")
+        pytest.fail("Expected exception caused by empty payload")
+    except smartplug.DecryptionException:
         pass
     # decrypt an invalid message
     try:
-        invalid = smartplug.decrypt(_encrypted[1:])
-        loads(invalid)
-        fail("Expected JSONDecodeError")
+        invalid_payload = smartplug.decrypt(_encrypted[1:])
+        loads(invalid_payload)
+        pytest.fail("Expected exception caused by invalid payload")
     except JSONDecodeError:
         pass
+
+
+# @pytest.mark.asyncio
+# async def test_get_consumption(unused_tcp_port, event_loop):
+#     sp_mock = mocks.SmartPlugMock("127.0.0.1", unused_tcp_port, event_loop)
+#     await asyncio.sleep(0.5)
+#     ok, response = await smartplug.get_consumption(sp_mock.addr, sp_mock.port)
+#     assert response == ""
+#     assert ok
+#     sp_mock.server.close()
+#     await sp_mock.server.wait_closed()
