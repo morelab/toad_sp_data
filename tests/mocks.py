@@ -8,6 +8,8 @@ class SmartPlugMock:
     """SmartPlugs will close the connection if the received command was
     incorrect or send a response if it was correct."""
 
+    # correct command
+    ok_command = {"emeter": {"get_realtime": {}}, "system": {"get_sysinfo": {}}}
     # response sent by the mock to a correct command
     ok_response = {
         "system": {"get_sysinfo": {"mac": "CA:FE:CA:FE:CA:FE", "relay_state": 1}},
@@ -27,7 +29,8 @@ class SmartPlugMock:
         self.server = await self._loop.create_task(self._coroutine)
 
     async def stop(self):
-        pass
+        self.server.close()
+        await self.server.wait_closed()
 
     @staticmethod
     async def handle_command(
@@ -36,15 +39,17 @@ class SmartPlugMock:
         encrypted_cmd = await reader.read()
         try:
             # decrypt and load message to raise exception if it is invalid
-            loads(smartplug.decrypt(encrypted_cmd).decode("utf-8"))
+            cmd = loads(smartplug.decrypt(encrypted_cmd).decode("utf-8"))
+            if cmd != SmartPlugMock.ok_command:
+                raise smartplug.DecryptionException
             # send response
             response = dumps(SmartPlugMock.ok_response)
             encrypted_response = smartplug.encrypt(response.encode("utf-8"))
             writer.write(encrypted_response)
-            writer.write_eof()
-            await writer.drain()
         except (JSONDecodeError, smartplug.DecryptionException):
             # incorrect command, close connection
             pass
+        writer.write_eof()
+        await writer.drain()
         writer.close()
         await writer.wait_closed()

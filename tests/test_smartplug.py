@@ -22,8 +22,7 @@ async def smartplug_mock(unused_tcp_port, event_loop) -> mocks.SmartPlugMock:
     sp_mock = mocks.SmartPlugMock("127.0.0.1", unused_tcp_port, event_loop)
     await sp_mock.start()
     yield sp_mock
-    sp_mock.server.close()
-    await sp_mock.server.wait_closed()
+    await sp_mock.stop()
 
 
 def test_encrypt():
@@ -62,6 +61,18 @@ def test_decrypt():
         pytest.fail("Expected exception caused by invalid payload")
     except JSONDecodeError:
         pass
+
+
+@pytest.mark.asyncio
+async def test_send_command(smartplug_mock):
+    ok, response = await smartplug.send_command(
+        smartplug_mock.ok_command, smartplug_mock.addr, smartplug_mock.port
+    )
+    assert ok and type(response) is dict and response == mocks.SmartPlugMock.ok_response
+    # ok, response = await smartplug.send_command(
+    #     {"_": "_"}, smartplug_mock.addr, smartplug_mock.port
+    # )
+    # assert not ok and type(response) is dict and response == {}
 
 
 @pytest.mark.asyncio
