@@ -17,10 +17,17 @@ class SmartPlugMock:
     def __init__(self, addr, port, loop: asyncio.AbstractEventLoop):
         self.addr = addr
         self.port = port
-        self.coroutine = asyncio.start_server(
+        self._coroutine = asyncio.start_server(
             SmartPlugMock.handle_command, self.addr, self.port, loop=loop,
         )
-        self.server = loop.create_task(self.coroutine)
+        self._loop = loop
+        self.server: asyncio.base_events.Server = ...
+
+    async def start(self):
+        self.server = await self._loop.create_task(self._coroutine)
+
+    async def stop(self):
+        pass
 
     @staticmethod
     async def handle_command(
@@ -34,9 +41,10 @@ class SmartPlugMock:
             response = dumps(SmartPlugMock.ok_response)
             encrypted_response = smartplug.encrypt(response.encode("utf-8"))
             writer.write(encrypted_response)
+            writer.write_eof()
             await writer.drain()
         except (JSONDecodeError, smartplug.DecryptionException):
             # incorrect command, close connection
             pass
         writer.close()
-        # await writer.wait_closed()
+        await writer.wait_closed()

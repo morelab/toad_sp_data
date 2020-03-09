@@ -1,6 +1,6 @@
 language: python
 
-# execute py38 and lint as separate CI processes
+# run py38 and lint as separate CI processes
 matrix:
   include:
     - python: 3.8
@@ -17,6 +17,6 @@ install:
 # command to run tests
 script:
   - tox
-# Upload coverage report to 'Codecov'
+# upload coverage report to Codecov
 after_script:
   - codecov --token=c50e2e84-7c1e-4fca-be9c-0528adcac0ed

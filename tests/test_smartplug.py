@@ -1,10 +1,9 @@
-# import asyncio
-import pytest
 from json import loads, JSONDecodeError
 
-# from tests import mocks
-from toad_sp_data import smartplug
+import pytest
 
+from tests import mocks
+from toad_sp_data import smartplug
 
 # test payload both with and without encryption
 _decrypted = '{"emeter": {"get_realtime": {}}, "system": {"get_sysinfo": {}}}'.encode(
@@ -16,6 +15,15 @@ _encrypted = (
     b"\xd4\xf4\xd6\xa5\xdc\xaf\xdb\xbe\xd3\xf1\xcb\xeb\x90\xb2\xd5\xb0\xc4"
     b"\x9b\xe8\x91\xe2\x8b\xe5\x83\xec\xce\xf4\xd4\xaf\xd2\xaf\xd2"
 )
+
+
+@pytest.fixture
+async def smartplug_mock(unused_tcp_port, event_loop) -> mocks.SmartPlugMock:
+    sp_mock = mocks.SmartPlugMock("127.0.0.1", unused_tcp_port, event_loop)
+    await sp_mock.start()
+    yield sp_mock
+    sp_mock.server.close()
+    await sp_mock.server.wait_closed()
 
 
 def test_encrypt():
@@ -56,12 +64,11 @@ def test_decrypt():
         pass
 
 
-# @pytest.mark.asyncio
-# async def test_get_consumption(unused_tcp_port, event_loop):
-#     sp_mock = mocks.SmartPlugMock("127.0.0.1", unused_tcp_port, event_loop)
-#     await asyncio.sleep(0.5)
-#     ok, response = await smartplug.get_consumption(sp_mock.addr, sp_mock.port)
-#     assert response == ""
-#     assert ok
-#     sp_mock.server.close()
-#     await sp_mock.server.wait_closed()
+@pytest.mark.asyncio
+async def test_get_consumption(smartplug_mock):
+    ok, response = await smartplug.get_consumption(
+        smartplug_mock.addr, smartplug_mock.port
+    )
+    assert ok and type(response) is dict and response == mocks.SmartPlugMock.ok_response
+    ok, _ = await smartplug.get_consumption("0.0.0.0", 0)
+    assert not ok
