@@ -107,3 +107,17 @@ async def test_get_consumption(smartplug_mock):
     assert ok and type(response) is dict and response == mocks.SmartPlugMock.ok_response
     ok, _ = await smartplug.get_consumption("0.0.0.0", 0)
     assert not ok
+
+
+@pytest.mark.asyncio
+async def test_extract_info(smartplug_mock):
+    expected = {"mac": "CA:FE:CA:FE:CA:FE", "power": 42, "relay_state": 1}
+    info = smartplug.extract_info(smartplug_mock.ok_response)
+    assert info == expected
+    # test old version of smartplugs
+    response = dict(smartplug_mock.ok_response)
+    response["emeter"]["get_realtime"]["power_mw"] = (
+        response["emeter"]["get_realtime"].pop("power") * 1000.0
+    )
+    expected["power"] = float(expected["power"])
+    assert info == expected

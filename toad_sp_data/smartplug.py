@@ -122,7 +122,7 @@ async def get_consumption(ip: str, port: int = 9999) -> Tuple[bool, Any]:
     return await send_command(cmd, ip, port)
 
 
-def _extract_info(response: dict) -> dict:
+def extract_info(response: dict) -> dict:
     """
     Internal function. Extract power, state and MAC address from SP response.
 
