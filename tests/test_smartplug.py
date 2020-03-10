@@ -1,4 +1,4 @@
-from json import loads, JSONDecodeError
+from json import dumps, loads, JSONDecodeError
 
 import pytest
 
@@ -6,9 +6,8 @@ from tests import mocks
 from toad_sp_data import smartplug
 
 # test payload both with and without encryption
-_decrypted = '{"emeter": {"get_realtime": {}}, "system": {"get_sysinfo": {}}}'.encode(
-    "utf-8"
-)
+_command = {"emeter": {"get_realtime": {}}, "system": {"get_sysinfo": {}}}
+_decrypted = dumps(_command).encode("utf-8")
 _encrypted = (
     b"\x00\x00\x00?\xd0\xf2\x97\xfa\x9f\xeb\x8e\xfc\xde\xe4\xc4\xbf\x9d\xfa"
     b"\x9f\xeb\xb4\xc6\xa3\xc2\xae\xda\xb3\xde\xbb\x99\xa3\x83\xf8\x85\xf8"
@@ -40,7 +39,7 @@ def test_decrypt():
     expected = loads(_decrypted.decode("utf-8"))
     decrypted = smartplug.decrypt(_encrypted)
     assert loads(decrypted.decode("utf-8")) == expected
-    decrypted = smartplug.decrypt(_encrypted[4:])
+    decrypted = smartplug.decrypt(_encrypted)
     assert loads(decrypted.decode("utf-8")) == expected
     # decrypt a null message
     try:
@@ -63,16 +62,41 @@ def test_decrypt():
         pass
 
 
+def test_decrypt_command():
+    cmd = smartplug.decrypt_command(_encrypted)
+    assert cmd == _command
+    try:
+        smartplug.decrypt_command(b"")
+        pytest.fail("Decrypting empty command should raise DecryptionException")
+    except smartplug.DecryptionException:
+        pass
+    try:
+        smartplug.decrypt_command(b"\xca\xfe\xca\xfe")
+        pytest.fail("Decrypting improperly formatted command should raise Exception")
+    except smartplug.DecryptionException:
+        pass
+
+
+def test_encrypt_command():
+    encrypted = smartplug.encrypt_command(_command)
+    # dumping the json may alter the byte order
+    assert smartplug.decrypt_command(encrypted) == _command
+    try:
+        smartplug.encrypt_command(None)
+    except TypeError:
+        pytest.fail("JSON dump should have initialized an empty dictionary")
+
+
 @pytest.mark.asyncio
 async def test_send_command(smartplug_mock):
     ok, response = await smartplug.send_command(
         smartplug_mock.ok_command, smartplug_mock.addr, smartplug_mock.port
     )
     assert ok and type(response) is dict and response == mocks.SmartPlugMock.ok_response
-    # ok, response = await smartplug.send_command(
-    #     {"_": "_"}, smartplug_mock.addr, smartplug_mock.port
-    # )
-    # assert not ok and type(response) is dict and response == {}
+    ok, response = await smartplug.send_command(
+        {"_": "_"}, smartplug_mock.addr, smartplug_mock.port
+    )
+    assert not ok and type(response) is dict and response == {}
 
 
 @pytest.mark.asyncio

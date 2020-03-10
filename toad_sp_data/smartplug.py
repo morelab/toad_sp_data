@@ -47,19 +47,38 @@ def decrypt(response: bytes) -> bytes:
     if response is None or len(response) < 4:
         raise DecryptionException("Invalid or null response")
     # strip unused bytes
-    if response[:4] == b"\x00\x00\x00?":
-        response = response[4:]
+    response = response[4:]
     # decrypt message
-    try:
-        key = 171
-        result = b""
-        for i in response:
-            x = key ^ i
-            key = i
-            result += bytes([x])
-    except json.JSONDecodeError:
-        raise DecryptionException("Could not decode JSON from decrypted response")
+    key = 171
+    result = b""
+    for i in response:
+        x = key ^ i
+        key = i
+        result += bytes([x])
     return result
+
+
+def encrypt_command(cmd: dict) -> bytes:
+    """
+    Encrypt a command intended for an smartplug.
+
+    :param cmd: command to encrypt
+    :return: bytes containing encrypted command
+    """
+    return encrypt(json.dumps(cmd).encode("utf-8"))
+
+
+def decrypt_command(cmd: bytes) -> dict:
+    """
+    Decrypt the response of an SmartPlug or raise DecryptionException.
+
+    :param cmd: bytes containing response to decrypt
+    :return: decrypted response
+    """
+    try:
+        return json.loads(decrypt(cmd))
+    except (json.JSONDecodeError, UnicodeDecodeError) as err:
+        raise DecryptionException(str(err))
 
 
 async def send_command(cmd: dict, ip: str, port: int = 9999) -> Tuple[bool, Any]:
@@ -84,7 +103,7 @@ async def send_command(cmd: dict, ip: str, port: int = 9999) -> Tuple[bool, Any]
         await writer.wait_closed()
         if len(data) == 0:
             return False, {}
-        decrypted = decrypt(data[4:])
+        decrypted = decrypt(data)
         return True, json.loads(decrypted)
     except Exception as err:
         logger.log_error_verbose(f"[SP]\tError: '{str(err)}'")

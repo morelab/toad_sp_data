@@ -46,7 +46,7 @@ class SmartPlugMock:
             response = dumps(SmartPlugMock.ok_response)
             encrypted_response = smartplug.encrypt(response.encode("utf-8"))
             writer.write(encrypted_response)
-        except (JSONDecodeError, smartplug.DecryptionException):
+        except (JSONDecodeError, UnicodeDecodeError, smartplug.DecryptionException):
             # incorrect command, close connection
             pass
         writer.write_eof()
