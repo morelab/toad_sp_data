@@ -1,4 +1,4 @@
-"""Encryption, decryption and consumption-getting functions for TPLink HS110
+"""Encryption, decryption and power-getting functions for TPLink HS110
 SmartPlugs based on the research made by softScheck in
 https://www.softscheck.com/en/reverse-engineering-tp-link-hs110/"""
 
@@ -110,9 +110,9 @@ async def send_command(cmd: dict, ip: str, port: int = 9999) -> Tuple[bool, Any]
         return False, err
 
 
-async def get_consumption(ip: str, port: int = 9999) -> Tuple[bool, Any]:
+async def get_power(ip: str, port: int = 9999) -> Tuple[bool, Any]:
     """
-    Get current consumption from a SmartPlug.
+    Get current power from a SmartPlug.
 
     :param ip: P address of target SP
     :param port: port of target SP
@@ -123,8 +123,9 @@ async def get_consumption(ip: str, port: int = 9999) -> Tuple[bool, Any]:
 
 
 def extract_info(response: dict) -> dict:
+
     """
-    Internal function. Extract power, state and MAC address from SP response.
+    Extract power, state and MAC address from SP response.
 
     :param response: decrypted response from SmartPlug
     :return: dict with keys "power", "relay_state" and "mac"
