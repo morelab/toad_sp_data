@@ -100,12 +100,10 @@ async def test_send_command(smartplug_mock):
 
 
 @pytest.mark.asyncio
-async def test_get_consumption(smartplug_mock):
-    ok, response = await smartplug.get_consumption(
-        smartplug_mock.addr, smartplug_mock.port
-    )
+async def test_get_power(smartplug_mock):
+    ok, response = await smartplug.get_power(smartplug_mock.addr, smartplug_mock.port)
     assert ok and type(response) is dict and response == mocks.SmartPlugMock.ok_response
-    ok, _ = await smartplug.get_consumption("0.0.0.0", 0)
+    ok, _ = await smartplug.get_power("0.0.0.0", 0)
     assert not ok
 
 
