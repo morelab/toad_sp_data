@@ -3,13 +3,14 @@ import asyncio
 from gmqtt import Client as MQTTClient
 from time import time
 
-from toad_sp_data import logger, loop, protocol, smartplug
+from toad_sp_data import config, logger, loop, protocol, smartplug
 
 
 class Gatherer(MQTTClient):
-    def __init__(self, *args):  # pragma: no cover
+    def __init__(self, *args, conf=config.mqtt_config):  # pragma: no cover
         # TODO: connect to MQTT broker
         super().__init__(*args)
+        self.config = conf
 
     def on_connect(self, *args):  # pragma: no cover
         logger.log_info_verbose("Connected to MQTT broker")
