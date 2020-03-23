@@ -36,9 +36,9 @@ script:
     quay.io/coreos/etcd
     /usr/local/bin/etcd
     --data-dir=/etcd-data --name etcd_node
-    --initial-advertise-peer-urls http://${127.0.0.1}:${2380} --listen-peer-urls http://0.0.0.0:${2380}
-    --advertise-client-urls http://${127.0.0.1}:${2379} --listen-client-urls http://0.0.0.0:${2379}
-    --initial-cluster etcd_node=http://${127.0.0.1}:${2380}
+    --initial-advertise-peer-urls http://127.0.0.1:2380 --listen-peer-urls http://0.0.0.0:2380
+    --advertise-client-urls http://127.0.0.1:2379 --listen-client-urls http://0.0.0.0:2379
+    --initial-cluster etcd_node=http://127.0.0.1:2380
   # run tox
   - tox
 # upload coverage report to Codecov
