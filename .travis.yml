@@ -1,5 +1,10 @@
 language: python
-
+env:
+  - ETCD_ADDR="127.0.0.1"
+  - ETCD_PORT_1=2379
+  - ETCD_PORT_2=2380
+services:
+  - docker
 # run py38 and lint as separate CI processes
 matrix:
   include:
@@ -14,10 +19,28 @@ matrix:
 install:
   - pip install --upgrade pip
   - pip install codecov tox
-  - sudo apt-get install mosquitto
-  - sudo systemctl start mosquitto
+  - docker pull toke/mosquitto
+  - docker pull quay.io/coreos/etcd
 # command to run tests
 script:
+  # run mosquitto container
+  - >
+    docker run
+    --name=mosquittoc
+    --publish 1883:1883
+    --network=host
+    toke/mosquitto
+  # run ETCD container
+  - >
+    docker run
+    --name=etcdc
+    --network=host
+    quay.io/coreos/etcd
+    /usr/local/bin/etcd
+    --data-dir=/etcd-data --name etcd_node
+    --initial-advertise-peer-urls http://${ETCD_ADDR}:${ETCD_PORT_2} --listen-peer-urls http://0.0.0.0:${ETCD_PORT_2}
+    --advertise-client-urls http://${ETCD_ADDR}:${ETCD_PORT_1} --listen-client-urls http://0.0.0.0:${ETCD_PORT_1}
+    --initial-cluster etcd_node=http://${ETCD_ADDR}:${ETCD_PORT_2}
   - tox
 # upload coverage report to Codecov
 after_script:
