@@ -26,6 +26,7 @@ script:
   # run mosquitto container
   - >
     docker run
+    --detach
     --name=mosquittoc
     --publish 1883:1883
     --network=host
@@ -33,6 +34,7 @@ script:
   # run ETCD container
   - >
     docker run
+    --detach
     --name=etcdc
     --network=host
     quay.io/coreos/etcd
