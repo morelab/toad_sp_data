@@ -1,12 +1,8 @@
 import logging
 
+from toad_sp_data.config import LOGGER_VERBOSE
 
-# define VERBOSE only if it wasn't defined before importing this file
-verbose = None
-if "VERBOSE" in globals():
-    verbose = globals().get("VERBOSE")  # pragma: no cover
-VERBOSE = verbose
-
+verbose = LOGGER_VERBOSE
 
 # configure logger
 logging.basicConfig(
@@ -26,10 +22,10 @@ def log_error(msg):  # pragma: no cover
 
 
 def log_info_verbose(msg):  # pragma: no cover
-    if VERBOSE:
+    if verbose:
         logger.info(msg)
 
 
 def log_error_verbose(msg):  # pragma: no cover
-    if VERBOSE:
+    if verbose:
         logger.error(msg)

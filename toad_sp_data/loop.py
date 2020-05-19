@@ -31,13 +31,13 @@ class Loop:
         self.args = arguments
         self.task: asyncio.Task = None
 
-    def start(self) -> None:
+    def start(self, event_loop: asyncio.AbstractEventLoop) -> None:
         """
         Create an asyncio.Task for self.func which will run async_func.
 
         :return: None
         """
-        self.task = asyncio.create_task(self.func(*self.args))
+        self.task = event_loop.create_task(self.func(*self.args))
 
     async def stop(self) -> None:
         """
