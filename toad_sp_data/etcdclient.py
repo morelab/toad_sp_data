@@ -1,63 +1,50 @@
-"""Helper submodule for operations on ETCD."""
-from typing import Dict
+import asyncio
 
-import etcd  # import python-ectd module
+import pytest
+import uuid
+from time import time
 
+from gmqtt import Client as MQTTClient
+from gmqtt.mqtt.constants import MQTTv311
+from tests import MQTT_BROKER_HOST, MQTT_BROKER_PORT
+from toad_sp_data import gatherer  # , protocol
 
-def get_smartplug_ids(host: str, port: int, key: str) -> Dict[str, str]:
-    """
-    Retrieve smartplug mac addresses and identifiers from ETCD.
-
-    :param host: ETCD host
-    :param port: ETCD port
-    :param key: parent key of all childs with SP MACs as keys and IDs as values
-    :return: dict with MAC addresses as keys and IDs as values
-    """
-    client = etcd.Client(host=host, port=port)
-    ids = {}
-    parent: etcd.EtcdResult = ...
-    try:
-        parent = client.read(key)
-    except etcd.EtcdKeyNotFound:
-        return {}
-    for child in parent.children:
-        k = child.key.split("/")[-1]
-        ids[k] = child.value
-    return ids
+_sample_senml = {
+    "e": [{"v": 42.0, "t": time()}],
+    "bn": "w.r0.c0",
+    "bu": "W",
+}
 
 
-def get_cached_ips(host: str, port: int, key: str) -> Dict[str, str]:
-    """
-    Retrieved previously known IP addresses of smartplugs.
+class TestListener(MQTTClient):
+    """Test class that subscribes to an MQTT channel and compares the payloaad
+    against the expected payload."""
 
-    :param host: ETCD host
-    :param port: ETCD port
-    :param key: parent key of all the cached ID->IP association
-    :return: dict with smartplug IDs as keys and IPs as values
-    """
-    client = etcd.Client(host=host, port=port)
-    ips = {}
-    parent: etcd.EtcdResult = ...
-    try:
-        parent = client.read(key)
-    except etcd.EtcdKeyNotFound:
-        return {}
-    for child in parent.children:
-        k = child.key.split("/")[-1]
-        ips[k] = child.value
-    return ips
+    def __init__(self, client_id, topic, expected):
+        super().__init__(client_id)
+        self.expected = expected
+        self.topic = topic
+        self.on_message = self.on_message_compare
+
+    async def connect_to_broker(self):
+        await super().connect(MQTT_BROKER_HOST, MQTT_BROKER_PORT, version=MQTTv311)
+        self.subscribe(self.topic, qos=0)
+
+    def on_message_compare(self, client, topic, payload, qos, properties):
+        # assert payload == self.expected
+        assert False  # FIXME: why is this never run?
+
+    async def stop(self):
+        await self.disconnect()
 
 
-def put_cached_ip(host: str, port: int, key: str, sp_id: str, sp_ip: str) -> None:
-    """
-    Write an ID->IP association to ETCD.
-
-    :param host: ETCD host
-    :param port: ETCD port
-    :param key: Key of cached addresses
-    :param sp_id: ID of the smartplug
-    :param sp_ip: IP of the smartplug
-    :return: None
-    """
-    client = etcd.Client(host=host, port=port)
-    client.write(f"{key}/{sp_id}", sp_ip)
+@pytest.mark.asyncio
+async def test_pub_to_mqtt():
+    topic = f"test/{uuid.uuid4()}"
+    listener = TestListener("", topic=topic, expected=_sample_senml)
+    await listener.connect_to_broker()
+    client = gatherer.Gatherer(event_loop=asyncio.get_event_loop())
+    await client.connect(MQTT_BROKER_HOST, MQTT_BROKER_PORT)
+    client.publish(topic, _sample_senml, qos=1)
+    await client.disconnect()
+    await listener.stop()
