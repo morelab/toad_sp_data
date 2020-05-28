@@ -2,7 +2,7 @@ import asyncio
 
 from gmqtt import Client as MQTTClient
 from gmqtt.mqtt.constants import MQTTv311
-from time import time
+from strict_rfc3339 import now_to_rfc3339_utcoffset
 from typing import List
 
 from toad_sp_data import config, etcdclient, logger, loop, protocol, smartplug
@@ -143,7 +143,12 @@ class Gatherer(MQTTClient):
         if base_name is None:
             return [{}]
         return [
-            {"bn": base_name, "bu": "W", "t": time(), "v": float(info.get("power"))}
+            {
+                "bn": base_name,
+                "bu": "W",
+                "t": now_to_rfc3339_utcoffset(),
+                "v": float(info.get("power")),
+            }
         ]
 
 
