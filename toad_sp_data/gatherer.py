@@ -89,6 +89,7 @@ class Gatherer(MQTTClient):
         """
         ok, power = await smartplug.get_power(ip=ip)
         if not ok:
+            logger.log_info(f"[SP]\tFailed to get power from {ip}")
             cached = False
             for _, cip in self.cached_ips.items():
                 if ip == cip:
@@ -101,12 +102,14 @@ class Gatherer(MQTTClient):
                 await asyncio.sleep(config.SLEEP_TIME_LONG)
             return
         info = smartplug.extract_info(power)
+        logger.log_info(f"[SP]\tObtained {info} from {ip}")
         senml = self.info_to_senml(info)
         self.pub_to_mqtt(senml)
         # Update local and remote (ETCD) IP cache
         sp_id = self.sp_ids.get(info["mac"])
         self.cached_ips[sp_id] = ip
         try:
+            logger.log_info(f"[SP]\tCaching IP {ip} for SP {sp_id}")
             etcdclient.put_cached_ip(
                 config.ETCD_HOST, config.ETCD_PORT, config.ETCD_CACHE_KEY, sp_id, ip
             )

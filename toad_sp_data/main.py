@@ -20,5 +20,5 @@ if __name__ == "__main__":
     )
 
     # Start Query Loops
-    g.start(g)
+    g.start(ips)
     asyncio.get_event_loop().run_forever()
