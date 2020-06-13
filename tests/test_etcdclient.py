@@ -2,7 +2,7 @@ import etcd
 import pytest
 import uuid
 
-from tests import ETCD_HOST, ETCD_PORT, ETCD_KEY, ETCD_CACHE_KEY
+from tests import ETCD_HOST, ETCD_PORT, ETCD_ID_KEY, ETCD_CACHE_KEY
 from toad_sp_data import etcdclient
 
 
@@ -30,7 +30,7 @@ class TmpCacheClient(etcd.Client):
 
 @pytest.fixture
 def tmp_client():
-    key = f"{ETCD_KEY}/{uuid.uuid4()}"
+    key = f"{ETCD_ID_KEY}/{uuid.uuid4()}"
     client = TmpClient(ETCD_HOST, ETCD_PORT, key)
     for k, v in client.expected.items():
         client.write(f"{key}/{k}", v)

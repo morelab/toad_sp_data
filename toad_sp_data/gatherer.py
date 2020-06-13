@@ -2,8 +2,8 @@ import asyncio
 
 from gmqtt import Client as MQTTClient
 from gmqtt.mqtt.constants import MQTTv311
-from strict_rfc3339 import now_to_rfc3339_utcoffset
 from typing import List
+from time import time
 
 from toad_sp_data import config, etcdclient, logger, loop, protocol, smartplug
 
@@ -75,7 +75,7 @@ class Gatherer(MQTTClient):
         :param senml: senml measurement to post
         :return: None
         """
-        # TODO: check if dumping and encoding senml is necessary
+        logger.log_info_verbose(f"[SP]\tPublish to MQTT: {senml}")
         self.publish(protocol.MQTT_PUB_TOPIC, senml)
 
     async def run_once(self, ip: str) -> None:
@@ -102,9 +102,9 @@ class Gatherer(MQTTClient):
                 await asyncio.sleep(config.SLEEP_TIME_LONG)
             return
         info = smartplug.extract_info(power)
-        logger.log_info(f"[SP]\tObtained {info} from {ip}")
+        # logger.log_info(f"[SP]\tObtained {info} from {ip}")
         senml = self.info_to_senml(info)
-        self.pub_to_mqtt(senml)
+        self.pub_to_mqtt(wrap_senml(senml))
         # Update local and remote (ETCD) IP cache
         sp_id = self.sp_ids.get(info["mac"])
         self.cached_ips[sp_id] = ip
@@ -140,25 +140,37 @@ class Gatherer(MQTTClient):
         """
         for expected_key in ("power", "relay_state", "mac"):
             if expected_key not in info.keys():
-                # TODO: handle invalid input
+                logger.log_error("[SP]\tMissing field in info dictionary")
                 return [{}]
-        base_name = self.sp_ids.get(info["mac"])
+        mac = info["mac"]
+        base_name = self.sp_ids.get(mac)
         if base_name is None:
+            logger.log_error(f"[SP]\tNo ID found for SmartPlug with MAC '{mac}'.")
             return [{}]
         return [
             {
-                "bn": base_name,
+                "bn": f"{base_name}/{protocol.MEASUREMENT}",
                 "bu": "W",
-                "t": now_to_rfc3339_utcoffset(),
+                "t": time(),
                 "v": float(info.get("power")),
             }
         ]
 
 
+def wrap_senml(senml):
+    """
+    Wrap the senml in the format used by IoToad compontents.
+
+    :param senml: senml to wrap
+    :return: wrapped senml
+    """
+    return {protocol.PAYLOAD_DATA_FIELD: senml}
+
+
 def create_gatherer(event_loop: asyncio.AbstractEventLoop) -> Gatherer:
     # Load smartplug IDs
     ids = etcdclient.get_smartplug_ids(
-        config.ETCD_HOST, config.ETCD_PORT, config.ETCD_KEY
+        config.ETCD_HOST, config.ETCD_PORT, config.ETCD_ID_KEY
     )
     logger.log_info(f"IDs: [{ids}]")
 

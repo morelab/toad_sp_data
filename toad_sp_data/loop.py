@@ -1,6 +1,8 @@
 import asyncio
 from typing import Any, Callable, Tuple
 
+from toad_sp_data import logger
+
 
 class Loop:
     def __init__(self, async_func: Callable[..., Any], arguments: Tuple[Any, ...]):
@@ -21,11 +23,15 @@ class Loop:
             :param args: args to pass to async_function
             :return: None
             """
-            try:
-                while True:
+            while True:
+                try:
                     await async_func(*args)
-            except asyncio.CancelledError:
-                pass
+                except asyncio.CancelledError:
+                    logger.log_error_verbose(f"[SP]\tRoutine {async_func} canceled")
+                    return
+                except Exception as e:
+                    logger.log_error_verbose(f"[SP]\tRoutine {async_func} failed: {e}")
+                    raise e
 
         self.func = func
         self.args = arguments

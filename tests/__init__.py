@@ -16,7 +16,7 @@ _mqtt_config = _config["MQTT"]
 
 ETCD_HOST = _etcd_config.get("host")
 ETCD_PORT = int(_etcd_config.get("port"))
-ETCD_KEY = _etcd_config.get("key")
+ETCD_ID_KEY = _etcd_config.get("id_key")
 ETCD_CACHE_KEY = _etcd_config.get("cache_key")
 LOGGER_VERBOSE = _logger_config.getboolean("verbose")
 MQTT_BROKER_HOST = _mqtt_config.get("broker_host")

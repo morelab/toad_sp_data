@@ -17,7 +17,7 @@ _workspace_config = _config["WORKSPACE"]
 # ETCD
 ETCD_HOST = _etcd_config.get("host")
 ETCD_PORT = int(_etcd_config.get("port"))
-ETCD_KEY = _etcd_config.get("key")
+ETCD_ID_KEY = _etcd_config.get("id_key")
 ETCD_CACHE_KEY = _etcd_config.get("cache_key")
 # Gatherer
 SLEEP_TIME_SHORT = float(_gatherer_config.get("sleep_time_short"))

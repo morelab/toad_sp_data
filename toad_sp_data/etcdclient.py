@@ -3,6 +3,8 @@ from typing import Dict
 
 import etcd  # import python-ectd module
 
+from toad_sp_data import logger
+
 
 def get_smartplug_ids(host: str, port: int, key: str) -> Dict[str, str]:
     """
@@ -18,7 +20,8 @@ def get_smartplug_ids(host: str, port: int, key: str) -> Dict[str, str]:
     parent: etcd.EtcdResult = ...
     try:
         parent = client.read(key)
-    except etcd.EtcdKeyNotFound:
+    except etcd.EtcdKeyNotFound as err:
+        logger.log_error(f"ETCD key for the ID map not found: {err}")
         return {}
     for child in parent.children:
         k = child.key.split("/")[-1]
