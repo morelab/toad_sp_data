@@ -8,8 +8,8 @@ from toad_sp_data import etcdclient
 
 class TmpClient(etcd.Client):
     expected = {
-        "CA:FE:CA:FE:CA:FE": "w.r0.c0",
-        "FE:CA:FE:CA:FE:CA": "w.r1.c1",
+        "CA:FE:CA:FE:CA:FE": "sp_w.r0.c0",
+        "FE:CA:FE:CA:FE:CA": "sp_w.r1.c1",
     }
 
     def __init__(self, host, port, key):
@@ -19,8 +19,8 @@ class TmpClient(etcd.Client):
 
 class TmpCacheClient(etcd.Client):
     expected = {
-        "w.r0.c0": "0.0.0.0",
-        "w.r1.c1": "0.0.0.1",
+        "sp_w.r0.c0": "0.0.0.0",
+        "sp_w.r1.c1": "0.0.0.1",
     }
 
     def __init__(self, host, port, key):
