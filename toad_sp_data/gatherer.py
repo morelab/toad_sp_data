@@ -76,7 +76,10 @@ class Gatherer(MQTTClient):
         :return: None
         """
         logger.log_info_verbose(f"[SP]\tPublish to MQTT: {senml}")
-        self.publish(protocol.MQTT_PUB_TOPIC, senml)
+        for db in config.MQTT_DATA_BASES:
+            topic = f"{protocol.MQTT_PUB_TOPIC}/{db}"
+            logger.log_info_verbose(f"[SP]\tTopic: {topic}")
+            self.publish(topic, senml)
 
     async def run_once(self, ip: str) -> None:
         """

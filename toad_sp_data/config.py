@@ -29,6 +29,8 @@ LOGGER_VERBOSE = _logger_config.getboolean("verbose")
 MQTT_BROKER_HOST = _mqtt_config.get("broker_host")
 MQTT_BROKER_PORT = int(_mqtt_config.get("broker_port"))
 MQTT_RESPONSE_TIMEOUT = int(_mqtt_config.get("response_timeout"))
+MQTT_DATA_BASES = _mqtt_config.get("data_bases").split(",")
+
 # WORKSPACE
 WS_IP_RANGE_START = _workspace_config.get("ip_range_start")
 WS_IP_RANGE_END = _workspace_config.get("ip_range_end")
