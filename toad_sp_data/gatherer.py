@@ -1,9 +1,9 @@
 import asyncio
+from time import time
+from typing import List
 
 from gmqtt import Client as MQTTClient
 from gmqtt.mqtt.constants import MQTTv311
-from typing import List
-from time import time
 
 from toad_sp_data import config, etcdclient, logger, loop, protocol, smartplug
 
@@ -14,11 +14,11 @@ class Gatherer(MQTTClient):
     broker."""
 
     def __init__(
-        self,
-        event_loop: asyncio.AbstractEventLoop,
-        client_id="Gatherer",
-        *args,
-        smartplug_ids={},
+            self,
+            event_loop: asyncio.AbstractEventLoop,
+            client_id="Gatherer",
+            *args,
+            smartplug_ids={},
     ):  # pragma: no cover
         """
         Constructor for Gatherer.
@@ -39,7 +39,7 @@ class Gatherer(MQTTClient):
             self.cached_ips = {}
 
     async def connect(
-        self, host, port=1883, ssl=False, keepalive=60, version=MQTTv311, raise_exc=True
+            self, host, port=1883, ssl=False, keepalive=60, version=MQTTv311, raise_exc=True
     ):
         await super().connect(host, port, ssl, keepalive, version, raise_exc)
 
@@ -156,6 +156,12 @@ class Gatherer(MQTTClient):
                 "bu": "W",
                 "t": time(),
                 "v": float(info.get("power")),
+            },
+            {
+                "bn": f"{base_name}/{protocol.STATUS}",
+                "bu": "S",
+                "t": time(),
+                "v": info.get("relay_state")
             }
         ]
 

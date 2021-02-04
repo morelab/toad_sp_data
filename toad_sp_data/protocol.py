@@ -5,4 +5,5 @@ _MQTT_FROM = "sp_data"
 MQTT_PUB_TOPIC = f"{_MQTT_CATEGORY}/{_MQTT_FROM}"
 
 MEASUREMENT = "power"
+STATUS = "status"
 PAYLOAD_DATA_FIELD = "data"
